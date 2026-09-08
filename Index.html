@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Error Log — JEE Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#100d0c;
+    --surface:#1b1613;
+    --surface-2:#241d19;
+    --border:#33291f;
+    --text:#f4ece0;
+    --text-muted:#a8988a;
+    --text-faint:#6f6154;
+
+    --chem-a:#7a2733; --chem-b:#e2793c; --chem-solid:#e2793c;
+    --math-a:#c9971f; --math-b:#f0dfae; --math-solid:#dcac3a;
+    --phys-a:#0e3e49; --phys-b:#7fdad4; --phys-solid:#4fb8b3;
+
+    --star:#ffc94a;
+    --danger:#d9534f;
+    --radius:20px;
+    --radius-sm:12px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(circle at 20% -10%, #241a15 0%, var(--bg) 45%);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:100px;
+  }
+
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    letter-spacing:-0.01em;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 20px 10px;
+  }
+  .topbar h1{
+    font-size:28px; font-weight:700; margin:0; line-height:1.1;
+  }
+  .topbar .sub{ color:var(--text-muted); font-size:13px; margin-top:4px; }
+  .streak-pill{
+    border:1px solid var(--chem-solid);
+    color:var(--chem-solid);
+    padding:8px 14px;
+    border-radius:100px;
+    font-weight:600;
+    font-size:14px;
+    white-space:nowrap;
+  }
+
+  .toolbar{
+    display:flex; gap:8px; padding:0 20px 16px; overflow-x:auto;
+  }
+  .toolbar button{
+    background:none; border:1px solid var(--border); color:var(--text-muted);
+    padding:6px 12px; border-radius:100px; font-size:12px; font-family:'Inter';
+    cursor:pointer; white-space:nowrap;
+  }
+  .toolbar button:active{ transform:scale(0.97); }
+
+  /* ---------- Subject cards ---------- */
+  .subjects{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+    padding:4px 20px 18px;
+  }
+  .subject-card{
+    position:relative;
+    border-radius:22px;
+    padding:16px 10px 14px;
+    text-align:center;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:transform .15s ease, border-color .15s ease;
+    background-size:150% 150%;
+  }
+  .subject-card:active{ transform:scale(0.96); }
+  .subject-card.active{ border-color:var(--text); }
+  .subject-card.chemistry{ background-image:linear-gradient(145deg,var(--chem-a),var(--chem-b)); }
+  .subject-card.mathematics{ background-image:linear-gradient(145deg,var(--math-a),var(--math-b)); }
+  .subject-card.physics{ background-image:linear-gradient(145deg,var(--phys-a),var(--phys-b)); }
+  .subject-card .icon{ font-size:26px; display:block; margin-bottom:6px; }
+  .subject-card .name{ font-weight:700; font-size:13px; color:#1a1310; }
+  .subject-card .count{
+    position:absolute; top:-6px; right:-6px;
+    background:var(--bg); border:2px solid var(--surface);
+    color:var(--text);
+    min-width:22px; height:22px; border-radius:50%;
+    font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .filter-row{
+    display:flex; gap:8px; padding:0 20px 10px; overflow-x:auto;
+  }
+  .chip{
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--text-muted); padding:7px 14px; border-radius:100px;
+    font-size:13px; cursor:pointer; white-space:nowrap; font-weight:500;
+    display:flex; align-items:center; gap:5px;
+  }
+  .chip.active{ background:var(--text); color:var(--bg); border-color:var(--text); }
+  .chip.star.active{ background:var(--star); color:#1a1310; border-color:var(--star); }
+
+  /* ---------- Entry list ---------- */
+  .entries{ padding:8px 20px; display:flex; flex-direction:column; gap:12px; }
+  .empty{
+    text-align:center; color:var(--text-faint); padding:60px 20px;
+    font-size:14px; line-height:1.6;
+  }
+  .empty .display{ font-size:20px; color:var(--text-muted); margin-bottom:6px; }
+
+  .entry{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:4px solid var(--chem-solid);
+    border-radius:var(--radius-sm);
+    padding:14px 14px 12px;
+  }
+  .entry.physics{ border-left-color:var(--phys-solid); }
+  .entry.mathematics{ border-left-color:var(--math-solid); }
+  .entry-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .entry-meta{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .tag{
+    font-size:11px; font-weight:600; padding:3px 9px; border-radius:100px;
+    background:var(--surface-2); color:var(--text-muted);
+  }
+  .tag.subject-chemistry{ color:var(--chem-solid); }
+  .tag.subject-physics{ color:var(--phys-solid); }
+  .tag.subject-mathematics{ color:var(--math-solid); }
+  .chapter{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+
+  .entry-actions{ display:flex; gap:10px; flex-shrink:0; }
+  .icon-btn{
+    background:none; border:none; cursor:pointer; font-size:18px;
+    color:var(--text-faint); padding:2px;
+  }
+  .icon-btn.starred{ color:var(--star); }
+
+  .entry-desc{ font-size:14px; line-height:1.5; margin:10px 0 6px; color:var(--text); }
+  .entry-img{ max-width:100%; border-radius:10px; margin-top:6px; display:block; }
+  .entry-footer{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .entry-time{ font-size:11px; color:var(--text-faint); }
+
+  /* ---------- FAB ---------- */
+  .fab{
+    position:fixed; left:20px; right:20px; bottom:20px;
+    background:var(--chem-solid);
+    color:#1a1310; border:none;
+    padding:16px; border-radius:100px;
+    font-size:15px; font-weight:700; font-family:'Inter';
+    cursor:pointer; box-shadow:0 8px 24px rgba(226,121,60,0.35);
+  }
+  .fab:active{ transform:scale(0.98); }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(8,6,5,0.75);
+    display:none; align-items:flex-end; justify-content:center;
+    z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .sheet{
+    background:var(--bg); width:100%; max-width:520px;
+    border-radius:24px 24px 0 0;
+    max-height:92vh; overflow-y:auto;
+    padding:20px 20px 28px;
+    border-top:1px solid var(--border);
+  }
+  .sheet-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .sheet-header h2{ font-size:20px; margin:0; }
+  .close-btn{ background:var(--surface); border:1px solid var(--border); color:var(--text); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:16px; }
+
+  label.field-label{ font-size:13px; font-weight:600; color:var(--text-muted); display:block; margin:16px 0 8px; }
+  label.field-label:first-of-type{ margin-top:0; }
+
+  .subject-select{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .subject-opt{
+    padding:14px 6px; border-radius:16px; text-align:center; cursor:pointer;
+    border:2px solid var(--border); background:var(--surface);
+    font-size:12px; font-weight:700; color:var(--text-muted);
+  }
+  .subject-opt .icon{ display:block; font-size:20px; margin-bottom:4px; }
+  .subject-opt.sel-chemistry{ border-color:var(--chem-solid); background:linear-gradient(145deg,rgba(122,39,51,.35),rgba(226,121,60,.2)); color:var(--chem-solid); }
+  .subject-opt.sel-mathematics{ border-color:var(--math-solid); background:linear-gradient(145deg,rgba(201,151,31,.3),rgba(240,223,174,.15)); color:var(--math-solid); }
+  .subject-opt.sel-physics{ border-color:var(--phys-solid); background:linear-gradient(145deg,rgba(14,62,73,.4),rgba(127,218,212,.15)); color:var(--phys-solid); }
+
+  input[type=text], textarea{
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:13px 14px; color:var(--text);
+    font-family:'Inter'; font-size:14px; resize:vertical;
+  }
+  input[type=text]::placeholder, textarea::placeholder{ color:var(--text-faint); }
+  textarea{ min-height:90px; }
+
+  .mistake-grid{ display:flex; flex-direction:column; gap:8px; }
+  .mistake-opt{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+    background:var(--surface); cursor:pointer; font-size:14px;
+  }
+  .mistake-opt .box{
+    width:18px; height:18px; border-radius:5px; border:1.5px solid var(--text-faint);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+  .mistake-opt.checked .box{ background:var(--chem-solid); border-color:var(--chem-solid); color:#1a1310; }
+  .mistake-opt.checked{ border-color:var(--chem-solid); }
+
+  .star-toggle{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px; border-radius:14px; border:1px solid var(--border);
+    background:var(--surface); margin-top:16px;
+  }
+  .star-toggle .label{ font-size:14px; font-weight:600; }
+  .star-toggle .hint{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+  .switch{
+    width:44px; height:26px; border-radius:100px; background:var(--surface-2);
+    border:1px solid var(--border); position:relative; cursor:pointer; flex-shrink:0;
+  }
+  .switch .knob{
+    width:20px; height:20px; border-radius:50%; background:var(--text-faint);
+    position:absolute; top:2px; left:2px; transition:all .15s ease;
+  }
+  .switch.on{ background:rgba(255,201,74,0.25); border-color:var(--star); }
+  .switch.on .knob{ left:20px; background:var(--star); }
+
+  .upload-box{
+    border:1.5px dashed var(--border); border-radius:16px; padding:24px;
+    text-align:center; color:var(--text-faint); font-size:13px; cursor:pointer;
+  }
+  .upload-preview{ margin-top:10px; max-width:100%; border-radius:12px; display:none; }
+
+  .save-btn{
+    width:100%; margin-top:22px; padding:15px; border:none; border-radius:100px;
+    background:var(--chem-solid); color:#1a1310; font-weight:700; font-size:15px;
+    cursor:pointer; font-family:'Inter';
+  }
+  .save-btn:disabled{ opacity:0.4; }
+
+  .backup-row{ display:flex; gap:8px; padding:4px 20px 4px; }
+  .backup-row button{
+    flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text-muted);
+    padding:10px; border-radius:12px; font-size:12px; cursor:pointer; font-family:'Inter';
+  }
+  #fileInput, #importInput{ display:none; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>
+      <h1>Error Log</h1>
+      <div class="sub">Every mistake, one step closer to a clean sheet.</div>
+    </div>
+    <div class="streak-pill" id="totalPill">0 logged</div>
+  </div>
+
+  <div class="subjects" id="subjectCards"></div>
+
+  <div class="filter-row" id="filterRow"></div>
+
+  <div class="backup-row">
+    <button onclick="exportData()">Export backup</button>
+    <button onclick="document.getElementById('importInput').click()">Import backup</button>
+    <input type="file" id="importInput" accept="application/json">
+  </div>
+
+  <div class="entries" id="entryList"></div>
+
+  <button class="fab" onclick="openSheet()">+ Log an error</button>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <h2>Log an error</h2>
+        <button class="close-btn" onclick="closeSheet()">✕</button>
+      </div>
+
+      <label class="field-label">Subject</label>
+      <div class="subject-select" id="subjectSelect">
+        <div class="subject-opt" data-subject="physics"><span class="icon">⚛</span>Physics</div>
+        <div class="subject-opt" data-subject="chemistry"><span class="icon">⚗</span>Chemistry</div>
+        <div class="subject-opt" data-subject="mathematics"><span class="icon">Σ</span>Maths</div>
+      </div>
+
+      <label class="field-label">Chapter / topic</label>
+      <input type="text" id="chapterInput" placeholder="e.g. Rotational Motion, Aldehydes, Definite Integrals">
+
+      <label class="field-label">What happened</label>
+      <textarea id="descInput" placeholder="Describe the question and where you went wrong"></textarea>
+
+      <label class="field-label">Attach a photo (optional)</label>
+      <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <span id="uploadLabel">Tap to upload the question / your solution</span>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <img class="upload-preview" id="uploadPreview">
+
+      <label class="field-label">What kind of mistake was it?</label>
+      <div class="mistake-grid" id="mistakeGrid">
+        <div class="mistake-opt" data-type="Conceptual"><span class="box"></span>Conceptual error</div>
+        <div class="mistake-opt" data-type="Calculation"><span class="box"></span>Calculation error</div>
+        <div class="mistake-opt" data-type="Reading"><span class="box"></span>Reading / interpretation error</div>
+        <div class="mistake-opt" data-type="Memory"><span class="box"></span>Memory-based error</div>
+        <div class="mistake-opt" data-type="Time"><span class="box"></span>Ran out of time</div>
+      </div>
+
+      <div class="star-toggle" onclick="toggleStar()">
+        <div>
+          <div class="label">★ Star mark</div>
+          <div class="hint">Bookmark this as a special question to revisit</div>
+        </div>
+        <div class="switch" id="starSwitch"><div class="knob"></div></div>
+      </div>
+
+      <button class="save-btn" id="saveBtn" onclick="saveEntry()">Save to Error Log</button>
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'jee_error_log_v1';
+  const SUBJECTS = ['physics','chemistry','mathematics'];
+  const SUBJECT_LABEL = {physics:'Physics', chemistry:'Chemistry', mathematics:'Maths'};
+  const SUBJECT_ICON = {physics:'⚛', chemistry:'⚗', mathematics:'Σ'};
+
+  let entries = loadEntries();
+  let activeSubjectFilter = 'all';
+  let starOnlyFilter = false;
+
+  let draft = { subject:null, mistakeTypes:[], starred:false, image:null };
+
+  function loadEntries(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function persist(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    render();
+  }
+
+  function countFor(subject){ return entries.filter(e=>e.subject===subject).length; }
+
+  function renderSubjectCards(){
+    const el = document.getElementById('subjectCards');
+    el.innerHTML = SUBJECTS.map(s => `
+      <div class="subject-card ${s} ${activeSubjectFilter===s?'active':''}" onclick="setSubjectFilter('${s}')">
+        <span class="count">${countFor(s)}</span>
+        <span class="icon">${SUBJECT_ICON[s]}</span>
+        <span class="name">${SUBJECT_LABEL[s]}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderFilterRow(){
+    const el = document.getElementById('filterRow');
+    el.innerHTML = `
+      <div class="chip ${activeSubjectFilter==='all'?'active':''}" onclick="setSubjectFilter('all')">All</div>
+      <div class="chip star ${starOnlyFilter?'active':''}" onclick="toggleStarFilter()">★ Starred</div>
+    `;
+  }
+
+  function setSubjectFilter(s){
+    activeSubjectFilter = (activeSubjectFilter===s) ? 'all' : s;
+    render();
+  }
+  function toggleStarFilter(){ starOnlyFilter = !starOnlyFilter; render(); }
+
+  function renderEntries(){
+    const el = document.getElementById('entryList');
+    let list = entries.slice().sort((a,b)=>b.createdAt-a.createdAt);
+    if(activeSubjectFilter!=='all') list = list.filter(e=>e.subject===activeSubjectFilter);
+    if(starOnlyFilter) list = list.filter(e=>e.starred);
+
+    if(list.length===0){
+      el.innerHTML = `<div class="empty">
+        <div class="display">Nothing here yet</div>
+        Log a mistake right after you spot it — that's when it's clearest.
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = list.map(e => `
+      <div class="entry ${e.subject}">
+        <div class="entry-top">
+          <div class="entry-meta">
+            <span class="tag subject-${e.subject}">${SUBJECT_LABEL[e.subject]}</span>
+            ${e.chapter ? `<span class="tag">${escapeHtml(e.chapter)}</span>` : ''}
+          </div>
+          <div class="entry-actions">
+            <button class="icon-btn ${e.starred?'starred':''}" onclick="toggleEntryStar('${e.id}')">${e.starred?'★':'☆'}</button>
+            <button class="icon-btn" onclick="deleteEntry('${e.id}')">🗑</button>
+          </div>
+        </div>
+        ${e.mistakeTypes.length ? `<div class="entry-meta" style="margin-top:8px">${e.mistakeTypes.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        <div class="entry-desc">${escapeHtml(e.description)}</div>
+        ${e.image ? `<img class="entry-img" src="${e.image}">` : ''}
+        <div class="entry-footer">
+          <span class="entry-time">${new Date(e.createdAt).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str){
+    if(!str) return '';
+    return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(){
+    renderSubjectCards();
+    renderFilterRow();
+    renderEntries();
+    document.getElementById('totalPill').textContent = `${entries.length} logged`;
+  }
+
+  function toggleEntryStar(id){
+    const e = entries.find(x=>x.id===id);
+    if(e){ e.starred = !e.starred; persist(); }
+  }
+  function deleteEntry(id){
+    if(!confirm('Delete this error from your log?')) return;
+    entries = entries.filter(x=>x.id!==id);
+    persist();
+  }
+
+  /* ---------- Modal / form ---------- */
+  function openSheet(){
+    draft = { subject:null, mistakeTypes:[], starred:false, image:null };
+    document.getElementById('chapterInput').value = '';
+    document.getElementById('descInput').value = '';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('uploadLabel').textContent = 'Tap to upload the question / your solution';
+    document.querySelectorAll('.subject-opt').forEach(o=>o.className='subject-opt');
+    document.querySelectorAll('.mistake-opt').forEach(o=>o.classList.remove('checked'));
+    document.getElementById('starSwitch').classList.remove('on');
+    document.getElementById('overlay').classList.add('open');
+  }
+  function closeSheet(){ document.getElementById('overlay').classList.remove('open'); }
+
+  document.querySelectorAll('.subject-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      const s = opt.dataset.subject;
+      draft.subject = s;
+      document.querySelectorAll('.subject-opt').forEach(o=>o.className='subject-opt');
+      opt.classList.add('sel-'+s);
+    });
+  });
+
+  document.querySelectorAll('.mistake-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      const t = opt.dataset.type;
+      if(draft.mistakeTypes.includes(t)){
+        draft.mistakeTypes = draft.mistakeTypes.filter(x=>x!==t);
+        opt.classList.remove('checked');
+      } else {
+        draft.mistakeTypes.push(t);
+        opt.classList.add('checked');
+      }
+    });
+  });
+
+  function toggleStar(){
+    draft.starred = !draft.starred;
+    document.getElementById('starSwitch').classList.toggle('on', draft.starred);
+  }
+
+  document.getElementById('fileInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 2*1024*1024){
+      alert('Please pick an image under 2MB — it is stored directly in your browser.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      draft.image = reader.result;
+      const preview = document.getElementById('uploadPreview');
+      preview.src = draft.image;
+      preview.style.display = 'block';
+      document.getElementById('uploadLabel').textContent = 'Photo attached — tap to replace';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function saveEntry(){
+    const chapter = document.getElementById('chapterInput').value.trim
